@@ -1,88 +1,72 @@
 <!DOCTYPE html>
 <html lang="uk">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FurniGoga</title>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 900px;
-        margin: 40px auto;
-        padding: 0 20px;
-      }
-      h1 {
-        color: #333;
-      }
-      .product {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 16px;
-      }
-      .product h3 {
-        margin: 0 0 8px;
-      }
-      .product p {
-        margin: 4px 0;
-        color: #555;
-      }
-      .price {
-        font-weight: bold;
-        color: #222;
-        font-size: 18px;
-      }
-      #error {
-        color: red;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>FurniGoga — Каталог товарів</h1>
-    <p id="error"></p>
-    <div id="products"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FurniGoga</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    nav { display: flex; justify-content: flex-end; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .product { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .product h3 { margin: 0 0 8px; }
+    .product p { margin: 4px 0; color: #555; }
+    .price { font-weight: bold; color: #222; font-size: 18px; }
+    #error { color: red; }
+    button { cursor: pointer; padding: 6px 12px; }
+  </style>
+</head>
+<body>
+  <nav id="nav"></nav>
+  <h1>FurniGoga — Каталог товарів</h1>
+  <p id="error"></p>
+  <div id="products"></div>
 
-    <script>
-      $.ajax({
-        url: "http://127.0.0.1:8000/api/v1/products",
-        method: "GET",
-        success: function (data) {
-          if (data.length === 0) {
-            $("#products").html("<p>Товарів поки немає.</p>");
-            return;
-          }
-          data.forEach(function (product) {
-            $("#products").append(
-              '<div class="product">' +
-                "<h3>" +
-                product.name +
-                "</h3>" +
-                '<p class="price">' +
-                product.price +
-                " грн</p>" +
-                "<p>" +
-                product.description +
-                "</p>" +
-                "<p>Матеріал: " +
-                (product.material || "—") +
-                "</p>" +
-                "<p>Колір: " +
-                (product.color || "—") +
-                "</p>" +
-                "<p>В наявності: " +
-                product.stock_quantity +
-                " шт.</p>" +
-                "</div>"
-            );
-          });
-        },
-        error: function () {
-          $("#error").text(
-            "Помилка завантаження даних. Перевірте, чи запущений бекенд."
+  <script>
+    const API = "http://127.0.0.1:8000/api/v1";
+
+    function isLoggedIn() { return !!localStorage.getItem("access_token"); }
+    function getUsername() { return localStorage.getItem("username"); }
+
+    function logout() {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("username");
+      window.location.href = "index.html";
+    }
+
+    function renderNav() {
+      if (isLoggedIn()) {
+        $("#nav").html(`<span>Привіт, <b>${getUsername()}</b></span> <a href="private.html">Керування</a> <button onclick="logout()">Вийти</button>`);
+      } else {
+        $("#nav").html(`<a href="login.html">Увійти</a> <a href="register.html">Реєстрація</a>`);
+      }
+    }
+
+    renderNav();
+
+    $.ajax({
+      url: API + "/products",
+      method: "GET",
+      success: function (data) {
+        if (data.length === 0) { $("#products").html("<p>Товарів поки немає.</p>"); return; }
+        data.forEach(function (p) {
+          $("#products").append(
+            `<div class="product">
+              <h3>${p.name}</h3>
+              <p class="price">${p.price} грн</p>
+              <p>${p.description}</p>
+              <p>Матеріал: ${p.material || "—"}</p>
+              <p>Колір: ${p.color || "—"}</p>
+              <p>В наявності: ${p.stock_quantity} шт.</p>
+            </div>`
           );
-        },
-      });
-    </script>
-  </body>
+        });
+      },
+      error: function () {
+        $("#error").text("Помилка завантаження. Перевірте, чи запущений бекенд.");
+      }
+    });
+  </script>
+</body>
 </html>
