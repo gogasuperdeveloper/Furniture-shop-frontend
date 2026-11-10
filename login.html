@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FurniGoga — Вхід</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 400px; margin: 80px auto; padding: 0 20px; }
+    input { width: 100%; padding: 8px; margin: 8px 0 16px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+    button { width: 100%; padding: 10px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+    #error { color: red; margin-bottom: 12px; }
+    a { display: block; text-align: center; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Вхід</h2>
+  <p id="error"></p>
+  <input type="text" id="username" placeholder="Username" />
+  <input type="password" id="password" placeholder="Пароль" />
+  <button onclick="login()">Увійти</button>
+  <a href="register.html">Немає акаунту? Зареєструватись</a>
+
+  <script>
+    const API = "http://127.0.0.1:8000/api/v1";
+
+    if (localStorage.getItem("access_token")) {
+      window.location.href = "index.html";
+    }
+
+    function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      fetch(API + "/auth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      })
+      .then(res => res.json().then(data => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          document.getElementById("error").textContent = "Невірний логін або пароль";
+          return;
+        }
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
+        localStorage.setItem("username", username);
+
+        const params = new URLSearchParams(window.location.search);
+        window.location.href = params.get("next") || "index.html";
+      })
+      .catch(() => {
+        document.getElementById("error").textContent = "Помилка з'єднання з сервером";
+      });
+    }
+  </script>
+</body>
+</html>
